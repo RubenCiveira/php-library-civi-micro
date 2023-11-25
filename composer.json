@@ -1,0 +1,21 @@
+{
+    "name": "civi/micro",
+    "minimum-stability": "dev",
+    "version": "0.0.1",
+    "autoload": {
+        "files": ["resources/starter.php"],
+        "psr-4": {
+            "Civi\\Micro\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Ruben civeira",
+            "email": "ruben.civeiraiglesias@plexus.es"
+        }
+    ],
+    "require": {
+        "ray/di": "^2.16",
+        "ray/aop": "^2.14"
+    }
+}
