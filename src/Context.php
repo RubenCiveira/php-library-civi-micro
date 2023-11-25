@@ -21,11 +21,12 @@ class Context extends AbstractModule {
     public static function registerDefinitions($definitions) {
         self::$_definitions_list[] = $definitions;
     }
-
+    
     public static function registerAspects($aspects) {
         self::$_aspect_list[] = $aspects;
     }
-
+    
+    private ContextContainer $container;
     private string $_cache;
 
     public function cache(string $cache) {
@@ -39,13 +40,19 @@ class Context extends AbstractModule {
         } else {
             $injector = new Injector($this);
         }
-        return new ContextContainer($injector);
+        $this->container = new ContextContainer($injector);
+        return $this->container;
     }
 
     public function bind(string $interface = ''): \Ray\Di\Bind {
         return parent::bind($interface);
     }
 
+    protected function currentContainer(): ContextContainer {
+        return $this->container;
+    }
+
+    #[\Override]
     protected function configure() {
         foreach(self::$_definitions_list as $path) {
             $path($this);
