@@ -1,5 +1,5 @@
 <?php
-namespace Civi\Micro\Aop;
+namespace Civi\Micro\ImplAop;
 
 use Civi\Micro\Resilience\Retry;
 
