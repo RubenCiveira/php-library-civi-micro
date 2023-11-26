@@ -4,8 +4,15 @@ namespace Civi\Micro\Impl\OAuth;
 use PDO;
 use Ramsey\Uuid\Uuid;
 use Civi\Micro\OAuth\Persistence;
+use Civi\Micro\SpecificConfig;
+use Ray\Di\Di\Named;
 
 class PersistenceSql implements Persistence {
+
+    public function __construct(#[SpecificConfig(name: 'main')] private readonly PDO $pdo) {
+
+    }
+
     private function connect(): PDO {
         $host = '127.0.0.1'; // Host de la base de datos
         $dbname = 'civi-micro'; // Nombre de la base de datos
