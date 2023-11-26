@@ -16,7 +16,7 @@ class OAuthFilter implements RequestFilter {
         if( strpos($request->getUri()->getPath(), '.well-known') === false ) { 
             $key = 'http://localhost/dev/back/ejemplo-micro-uno/public/.well-known/sign.json';
             $token = file_get_contents($key);
-           //  echo "<h1>TT: " . $token ."</p>";
+
             $jwksUri = 'http://localhost/dev/back/ejemplo-micro-uno/public/.well-known/jwks.json';
             $jwksJson = file_get_contents($jwksUri);
             $jwkSet = JWKSet::createFromJson($jwksJson);
@@ -25,14 +25,20 @@ class OAuthFilter implements RequestFilter {
             // print_r( $jwkSet );
 
             $serializer = new CompactSerializer();
-            $jwt = $serializer->unserialize($token);
-
-            // Crear un verificador de JWS con el algoritmo correspondiente
-            $algorithmManager = new AlgorithmManager([new RS256()]);
-            $jwsVerifier = new JWSVerifier($algorithmManager);
-
-            // Verificar el token con el JWKSet
-            $isVerified = $jwsVerifier->verifyWithKeySet($jwt, $jwkSet, 0);
+            try {
+                $jwt = $serializer->unserialize($token);
+            } catch(\InvalidArgumentException $je) {
+                $jwt = null;
+            }
+            $isVerified = false;
+            if( $jwt ) {
+                // Crear un verificador de JWS con el algoritmo correspondiente
+                $algorithmManager = new AlgorithmManager([new RS256()]);
+                $jwsVerifier = new JWSVerifier($algorithmManager);
+                
+                // Verificar el token con el JWKSet
+                $isVerified = $jwsVerifier->verifyWithKeySet($jwt, $jwkSet, 0);
+            }
             var_dump( $isVerified );
         }
         // Tiene que evaluar cabeceras y toda la pesca

@@ -16,6 +16,8 @@
     ],
     "require": {
         "ray/di": "^2.16",
-        "ray/aop": "^2.14"
+        "ray/aop": "^2.14",
+        "web-token/jwt-core": "v4.0.x-dev",
+        "ramsey/uuid": "5.x-dev"
     }
 }
