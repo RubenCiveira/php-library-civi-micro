@@ -21,6 +21,7 @@
         "slim/psr7": "dev-master",
         "web-token/jwt-core": "v4.0.x-dev",
         "ramsey/uuid": "5.x-dev",
-        "symfony/yaml": "7.1.x-dev"
+        "symfony/yaml": "7.1.x-dev",
+        "robmorgan/phinx": "0.x-dev"
     }
 }

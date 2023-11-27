@@ -7,6 +7,7 @@ use Civi\Micro\Enviroment;
 use Civi\Micro\Jwt\TokenVerifier;
 use Civi\Micro\Jwt\TokenSigner;
 use Civi\Micro\Jwt\TokenHandler;
+use Civi\Micro\Migration\MigrationService;
 
 return function(Context $context) {
     // Entorno
@@ -16,4 +17,6 @@ return function(Context $context) {
     // Jwt
     $context->bind(TokenVerifier::class)->to(TokenHandler::class);
     $context->bind(TokenSigner::class)->to(TokenHandler::class);
+    // Migrations
+    $context->bind(MigrationService::class);
 };
