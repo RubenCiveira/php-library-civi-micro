@@ -4,12 +4,16 @@ use Civi\Micro\Impl\Sql\PdoBuilder;
 use Civi\Micro\Impl\EnviromentImpl;
 use Civi\Micro\Sql\DataSource;
 use Civi\Micro\Enviroment;
+use Civi\Micro\Jwt\TokenVerifier;
+use Civi\Micro\Jwt\TokenSigner;
+use Civi\Micro\Jwt\TokenHandler;
 
 return function(Context $context) {
-    $context->bind(PDO::class)->toProvider(PdoBuilder::class);
+    // Entorno
     $context->bind(Enviroment::class)->to(EnviromentImpl::class);
-    // OAuth en maria db
-    $context->bind(Civi\Micro\OAuth\Persistence::class)->to(Civi\Micro\Impl\OAuth\PersistenceSql::class);
-
-
+    // Base de datos.
+    $context->bind(PDO::class)->toProvider(PdoBuilder::class);
+    // Jwt
+    $context->bind(TokenVerifier::class)->to(TokenHandler::class);
+    $context->bind(TokenSigner::class)->to(TokenHandler::class);
 };
