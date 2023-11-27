@@ -9,7 +9,7 @@ use Civi\Micro\Enviroment;
 #[Attribute(Attribute::TARGET_PARAMETER)]
 final class SpecificConfig
 {
-    public static function env(InjectionPointInterface $ip, Enviroment $env): Enviroment {
+    public static function env(string $group, InjectionPointInterface $ip, Enviroment $env): Enviroment {
         $pprs = $ip->getParameter()->getAttributes( SpecificConfig::class );
         $preffix = '';
         foreach($pprs as $ppr) {
@@ -18,22 +18,25 @@ final class SpecificConfig
                 $preffix = $args['name'] . '.';
             }
         }
-        return new ContextEnv($preffix, $env);
+        return new ContextEnv($group, $preffix, $env);
     }
     public function __construct(public readonly string $name) {
     }
 }
 
 class ContextEnv implements Enviroment {
-    public function __construct(private readonly string $preffix, private readonly Enviroment $env) {
+    private readonly string $group;
+    public function __construct(string $group, private readonly string $preffix, private readonly Enviroment $env) {
+        $this->group = 'env.' . ($group ? $group . '.' : '');
     }
 
     public function has(string $name): bool {
-        return $this->env->has('env.' . $this->preffix . $name) || $this->env->has('env.' . $name);
+        return $this->env->has($this->group . $this->preffix . $name) || $this->env->has($this->group  . $name);
     }
 
-    public function property(string $name): string {
-        $value = $this->env->property('env.' . $this->preffix . $name);
-        return $this->env->has('env.' . $this->preffix . $name) ? $this->env->property('env.' . $this->preffix . $name) :  $this->env->property('env.' . $name);
+    public function property(string $name, $default='') {
+        return $this->env->has($this->group . $this->preffix . $name) ? 
+            $this->env->property($this->group  . $this->preffix . $name) :  
+            $this->env->property($this->group . $name, $default);
     }
 }

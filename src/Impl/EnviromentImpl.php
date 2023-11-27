@@ -2,25 +2,50 @@
 namespace Civi\Micro\Impl;
 
 use Civi\Micro\Enviroment;
+use Symfony\Component\Yaml\Yaml;
+use Symfony\Component\Yaml\Exception\ParseException;
 
 class EnviromentImpl implements Enviroment {
-    public function has(string $name): bool {
-        return $this->property($name) !== '';
+    static $paths = [];
+
+    private $vars = [];
+
+    public function __construct() {
+        foreach(self::$paths as $path) {
+            $this->vars = array_merge( $this->vars, $this->parse($path) );
+        }
     }
-    public function property(string $name): string {
-        $host = '127.0.0.1'; // Host de la base de datos
-        $dbname = 'civi-micro'; // Nombre de la base de datos
-        $username = 'root'; // Usuario de la base de datos
-        $password = 'toor'; // Contraseña del usuario
-        if( 'env.url' == $name ) {
-            return "mysql:host=$host;dbname=$dbname;charset=utf8";
+
+    public function has(string $name): bool {
+        return isset( $this->vars[$name] );
+    }
+
+    public function property(string $name, $default='') {
+        return $this->vars[$name] ?? $default;
+    }
+
+    private function parse($file) {
+        try {
+            return $this->plainArray( Yaml::parseFile( $file ) );
+        } catch (ParseException $e) {
+            printf("No se pudo parsear el archivo YAML: %s", $e->getMessage());
         }
-        if( 'env.username' == $name ) {
-            return $username;
+    }
+
+    private function plainArray($array, $prefix=''): array {
+        $resultado = [];
+        foreach ($array as $clave => $valor) {
+            $claveCompleta = $prefix === '' ? $clave : $prefix . '.' . $clave;
+            if (is_array($valor) ) {
+                $resultado = array_merge($resultado, $this->plainArray($valor, $claveCompleta));
+            } else if( !is_numeric($clave) ) {
+                $resultado[$claveCompleta] = $valor;
+            } else {
+                $resultado[$clave] = $value;
+            }
         }
-        if( 'env.password' == $name ) {
-            return $password;
-        }
-        return '';
+        return $resultado;
     }
 }
+
+EnviromentImpl::$paths = ['../resources/config/application.yaml'];
