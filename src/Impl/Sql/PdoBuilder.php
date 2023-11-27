@@ -7,8 +7,7 @@ use Civi\Micro\SpecificConfig;
 use Ray\Di\InjectionPointInterface;
 use Ray\Di\ProviderInterface;
 
-
-class PdoBuilder  implements ProviderInterface {
+class PdoBuilder implements ProviderInterface {
     public function __construct(private readonly InjectionPointInterface $ip, private readonly Enviroment $env) {
     }
     public function get() {
