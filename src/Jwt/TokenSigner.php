@@ -10,5 +10,5 @@ interface TokenSigner {
     /**
      *  @param PublicKey[] $elementos Array de objetos de tipo MiClase
      */
-    public function convertToJwks(array $publics): string;
+    public function convertToJwks(array $publics);
 }

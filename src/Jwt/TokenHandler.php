@@ -52,13 +52,12 @@ class TokenHandler implements TokenVerifier, TokenSigner  {
     /**
      *  @param PublicKey[] $elementos Array de objetos de tipo MiClase
      */
-    public function convertToJwks(array $publics): string {
+    public function convertToJwks(array $publics) {
         $keys = [];
         foreach($publics as $pk) {
             $keys[] = JWKFactory::createFromKey($pk->key);
         }
-        $jwkSet = new JWKSet($keys);
-        return json_encode($jwkSet);
+        return new JWKSet($keys);
     }
 
     public function verify(string $token, TokenVerificationInfo $info) {
