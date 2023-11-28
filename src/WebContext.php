@@ -5,6 +5,10 @@ use Slim\Factory\AppFactory;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
 
+// INFO: deberíamos mantener controlado el consumo de ram
+header("HTTP/1.0 200 OK");
+ini_set('memory_limit', '16M');
+
 class WebContext extends Context {
     private static $_filters = [];
 
@@ -26,10 +30,17 @@ class WebContext extends Context {
                 $uri = $uri->withPath($path);
                 $request = $request->withUri($uri);
             }
-            return $handler->handle( $this->filter( $request ) );
+            $response = $handler->handle( $this->filter( $request ) );
+            // Cambia la versión del protocolo a 1.0
+            $protocoloHttp = (isset($_SERVER['SERVER_PROTOCOL']) ? $_SERVER['SERVER_PROTOCOL'] : 'UK');
+            return $protocoloHttp === 'HTTP/1.0' ? $response->withProtocolVersion('1.0') : $response;
         });
         $routes($app, $this->build());
         $app->run();
+        $size = memory_get_usage();
+        $unit=array('b','kb','mb','gb','tb','pb');
+        $size = round($size/pow(1024,($i=floor(log($size,1024)))),2).' '.$unit[$i];
+        echo "<p>Consumo: " . $size . "</p>";
     }
 
     private function filter(Request $request): Request {
