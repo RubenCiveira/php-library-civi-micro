@@ -1,6 +1,7 @@
 <?php
 namespace Civi\Micro\Impl;
 
+use Civi\Micro\Context;
 use Civi\Micro\Enviroment;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Yaml\Exception\ParseException;
@@ -11,8 +12,9 @@ class EnviromentImpl implements Enviroment {
     private $vars = [];
 
     public function __construct() {
+        $base = Context::getBasePath();
         foreach(self::$paths as $path) {
-            $this->vars = array_merge( $this->vars, $this->parse($path) );
+            $this->vars = array_merge( $this->vars, $this->parse($base . $path) );
         }
     }
 
@@ -48,4 +50,4 @@ class EnviromentImpl implements Enviroment {
     }
 }
 
-EnviromentImpl::$paths = ['../resources/config/application.yaml'];
+EnviromentImpl::$paths = ['resources/config/application.yaml'];

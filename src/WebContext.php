@@ -16,7 +16,12 @@ class WebContext extends Context {
         self::$_filters[] = $filters;
     }
 
-    public function __construct(private readonly string $basePath) {
+    public function __construct(string $basePath, private readonly string $entryPoint) {
+        Context::configBasePath($basePath);
+        if( !is_dir($basePath . '/.cache') ) {
+            mkdir($basePath.'/.cache');
+        }
+        $this->cache('../.cache');
     }
 
     public function start(\Closure $routes) {
@@ -25,8 +30,8 @@ class WebContext extends Context {
             $uri = $request->getUri();
             $path = $uri->getPath();
 
-            if (str_starts_with($path, $this->basePath)) {
-                $path = substr($path, strlen($this->basePath));
+            if (str_starts_with($path, $this->entryPoint)) {
+                $path = substr($path, strlen($this->entryPoint));
                 $uri = $uri->withPath($path);
                 $request = $request->withUri($uri);
             }

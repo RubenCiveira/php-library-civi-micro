@@ -5,6 +5,7 @@ use PDO;
 use PDOException;
 use RecursiveIteratorIterator;
 use RecursiveDirectoryIterator;
+use Civi\Micro\Context;
 use Civi\Micro\SpecificConfig;
 use Ray\Di\InjectorInterface;
 
@@ -63,7 +64,12 @@ class MigrationService {
     }
 
     private function runSql($file, $exists, $md5) {
-        $sql = file_get_contents($file);
+        $lines = file($file);
+        $filtered = array_filter($lines, function($line) {
+            return !preg_match('/^--/', $line);
+        });
+        $sql = implode("\r\n", $filtered);
+        // $sql = file_get_contents($file);
         $sentencias = preg_split('/;\s*(\n|$)/', $sql);
         try {
             foreach($sentencias as $sentencia) {
@@ -97,7 +103,7 @@ class MigrationService {
         $stmt = $this->pdo->prepare($exists
             ? 'update $databaselog set filename=:file, md5sum=:sum, error=:error, execution=NOW() where filename=:file'
             : 'insert into $databaselog (filename, md5sum, error, execution) values (:file, :sum, :error, NOW())');
-        $stmt->execute(['file' => $file, 'sum' => $md5, 'error' => $ex->getMessage()]);
+        $stmt->execute(['file' => $file, 'sum' => $md5, 'error' => substr( $ex->getMessage(), 0, 150) ]);
         echo "Error falta con " . $ex->getMessage();
     }
 
@@ -130,7 +136,8 @@ class MigrationService {
     }
 
     private function retrieveFiles() {
-        $directorioRaiz = '../resources/migrations';
+        $base = Context::getBasePath();
+        $directorioRaiz = $base . 'resources/migrations';
         $iterator = new RecursiveIteratorIterator(
             new RecursiveDirectoryIterator($directorioRaiz),
             RecursiveIteratorIterator::SELF_FIRST
@@ -156,7 +163,10 @@ class MigrationService {
             $stmt = $this->pdo->prepare('insert into $databaselock values (1, 0, NULL)');
             $stmt->execute();
         } catch(PDOException $ex) {
-            echo "Error de PDO: " . $ex->getMessage();
+            $driver = $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+            if( 'mysql' != $driver || $ex->getCode() != '42S01' ) {
+                echo "Error de PDO: " . $ex->getMessage();
+            }
         }
     }
     private function createLogTable() {
@@ -164,7 +174,10 @@ class MigrationService {
             $stmt = $this->pdo->prepare('create table $databaselog (filename varchar(250), md5sum varchar(35), execution datetime, error varchar(250) )');
             $stmt->execute();
         } catch(PDOException $ex) {
-            echo "Error de PDO: " . $ex->getMessage();
+            $driver = $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+            if( 'mysql' != $driver || $ex->getCode() != '42S01' ) {
+                echo "Error de PDO: " . $ex->getMessage();
+            }
         }
     }
 }

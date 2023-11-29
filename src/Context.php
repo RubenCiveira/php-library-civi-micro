@@ -17,7 +17,16 @@ ServiceLocator::setReader(new AttributeReader());
 class Context extends AbstractModule {
     private static $_aspect_list = [];
     private static $_definitions_list = [];
+    private static $_base_path = '';
     
+    public static function configBasePath($path) {
+        self::$_base_path = $path;
+    }
+
+    public static function getBasePath(): string {
+        return self::$_base_path;
+    }
+
     public static function registerDefinitions($definitions) {
         self::$_definitions_list[] = $definitions;
     }
