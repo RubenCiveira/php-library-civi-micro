@@ -1,9 +1,11 @@
 <?php
 namespace Civi\Micro\Impl\Sql;
 
-use \PDO;
-use \Clousure;
+use PDO;
+use PDOException;
+use Clousure;
 use Civi\Micro\Sql\SqlTemplate;
+use Civi\Micro\Sql\NotUniqueException;
 
 class SqlTemplateImpl implements SqlTemplate {
 
@@ -11,7 +13,16 @@ class SqlTemplateImpl implements SqlTemplate {
 
     public function execute($query, array $params): bool {
         $stmt = $this->pdo->prepare(query);
-        return $stmt->execute($params);
+        try {
+            return $stmt->execute($params);
+        } catch(PDOException $ex) {
+            $driver = $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+            $code = 'pgsql' == $driver ? 23505 : 23000;
+            if( $ex->getCode() == $code ) {
+                throw new NotUniqueException($ex);
+            }
+            throw $ex;
+        }
     }
 
     public function query($query, array $params, Clousure $clousure): array {
