@@ -3,7 +3,7 @@ namespace Civi\Micro\Impl\Sql;
 
 use PDO;
 use PDOException;
-use Clousure;
+use Closure;
 use Civi\Micro\Sql\SqlTemplate;
 use Civi\Micro\Sql\NotUniqueException;
 
@@ -25,21 +25,21 @@ class SqlTemplateImpl implements SqlTemplate {
         }
     }
 
-    public function query($query, array $params, Clousure $clousure): array {
-        $stmt = $this->pdo->prepare(query);
-        $stmt->query( $params );
+    public function query($query, array $params, Closure $clousure): array {
+        $stmt = $this->pdo->prepare($query);
+        $stmt->execute( $params );
         $keys = [];
         while ($fila = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $keys[] = $clousure->call( $file );
+            $keys[] = $clousure($fila );
         }
         return $keys;
     }
 
-    public function findOne($query, array $param, Clousure $clousure) {
+    public function findOne($query, array $param, Closure $clousure) {
         $stmt = $this->pdo->prepare(query);
         $stmt->query( $params );
         $key = null;
-        return $fila = $stmt->fetch(PDO::FETCH_ASSOC) ? $clousure->call( $file ) : null;
+        return $fila = $stmt->fetch(PDO::FETCH_ASSOC) ? $clousure($fila ) : null;
     }
 
     public function exists($query, array $param): bool {

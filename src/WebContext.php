@@ -21,7 +21,7 @@ class WebContext extends Context {
         if( !is_dir($basePath . '/.cache') ) {
             mkdir($basePath.'/.cache');
         }
-        $this->cache('../.cache');
+        $this->cache($basePath . '/.cache');
     }
 
     public function start(\Closure $routes) {
