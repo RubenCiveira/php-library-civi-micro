@@ -12,12 +12,12 @@ class Profile {
     public static function run(WebContext $context) {
         $instance = new Profile();
         $context->start(fn($app, $injector) => $instance->routes($app, $injector));
-
     }
 
     public function routes(App $app, ContainerInterface $injector) {
         $app->get('/migrations', function (Request $request, Response $response, $args) use($injector) {
             $mig = $injector->get(MigrationService::class);
+
             $mig->run();
             $response->getBody()->write( "Done" );
             return $response;
