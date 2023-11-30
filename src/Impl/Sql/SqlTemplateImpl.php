@@ -12,9 +12,10 @@ class SqlTemplateImpl implements SqlTemplate {
     public function __construct(private readonly PDO $pdo) {}
 
     public function execute($query, array $params): bool {
-        $stmt = $this->pdo->prepare(query);
+        $stmt = $this->pdo->prepare($query);
         try {
-            return $stmt->execute($params);
+            $result = $stmt->execute($params);
+            return $result ? $stmt->rowCount() : 0;
         } catch(PDOException $ex) {
             $driver = $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
             $code = 'pgsql' == $driver ? 23505 : 23000;
@@ -36,16 +37,17 @@ class SqlTemplateImpl implements SqlTemplate {
     }
 
     public function findOne($query, array $param, Closure $clousure) {
-        $stmt = $this->pdo->prepare(query);
-        $stmt->query( $params );
+        $stmt = $this->pdo->prepare($query);
+        $stmt->execute( $param );
         $key = null;
-        return $fila = $stmt->fetch(PDO::FETCH_ASSOC) ? $clousure($fila ) : null;
+        $fila = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $fila ? $clousure($fila) : null;
     }
 
     public function exists($query, array $param): bool {
-        $stmt = $this->pdo->prepare(query);
-        $stmt->query( $params );
+        $stmt = $this->pdo->prepare($query);
+        $stmt->execute( $param );
         $key = null;
-        return $stmt->fetch();
+        return !!$stmt->fetch();
     }
 }
