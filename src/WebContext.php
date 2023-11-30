@@ -26,13 +26,15 @@ class WebContext extends Context {
 
     public function start(\Closure $routes) {
         $app = AppFactory::create();
+        // $app->setBasePath($this->entryPoint));
+
         $app->add( function (Request $request, RequestHandler $handler) {
             $uri = $request->getUri();
             $path = $uri->getPath();
 
             if (str_starts_with($path, $this->entryPoint)) {
                 $path = substr($path, strlen($this->entryPoint));
-                $uri = $uri->withPath($path);
+                $uri = $uri->withPath($path ?? '/');
                 $request = $request->withUri($uri);
             }
             $response = $handler->handle( $this->filter( $request ) );
@@ -40,6 +42,7 @@ class WebContext extends Context {
             $protocoloHttp = (isset($_SERVER['SERVER_PROTOCOL']) ? $_SERVER['SERVER_PROTOCOL'] : 'UK');
             return $protocoloHttp === 'HTTP/1.0' ? $response->withProtocolVersion('1.0') : $response;
         });
+        $app->addBodyParsingMiddleware();
         $routes($app, $this->build());
         $app->run();
         $size = memory_get_usage();
