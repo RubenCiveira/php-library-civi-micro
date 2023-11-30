@@ -72,14 +72,17 @@ class MigrationService {
         // $sql = file_get_contents($file);
         $sentencias = preg_split('/;\s*(\n|$)/', $sql);
         try {
+            $this->pdo->beginTransaction();
             foreach($sentencias as $sentencia) {
                 if( $sentencia ) {
                     $stmt = $this->pdo->prepare($sentencia);
                     $stmt->execute();
                 }
             }
+            $this->pdo->commit();
             $this->markOk($file, $exists, $md5);
         } catch(\Exception $ex) {
+            $this->pdo->rollBack();
             $this->markFail($file, $exists, $md5, $ex);
         }
     }
