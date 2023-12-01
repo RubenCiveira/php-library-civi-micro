@@ -4,6 +4,7 @@ namespace Civi\Micro;
 use Ray\Di\AbstractModule;
 use Ray\Di\Injector;
 use Ray\Di\InjectorInterface;
+use Ray\Compiler\ScriptInjector;
 use Ray\Compiler\DiCompiler;
 
 use Psr\Container\ContainerInterface;
@@ -39,19 +40,44 @@ class Context extends AbstractModule {
     private string $_cache;
 
     public function cache(string $cache) {
+        // FIXME: controlar el root.
         $this->_cache = $cache;
     }
     
     public function build(): ContextContainer {
-        if( $this->_cache ) {
-            $injector = new DiCompiler($this, $this->_cache);
-            $injector->compile();
+        if( $this->_cache && is_writable($this->_cache) ) {
+            if( !file_exists($this->_cache.'/_compile.log') ) {
+                if( count( scandir($this->_cache) ) > 2 ) {
+                    var_dump( scandir($this->_cache));
+                    die('El directorio cache debe estar vacio para usarlo como cache: '.realpath($this->_cache).' no lo está: vacielo a mano.');
+                }
+                $injector = new DiCompiler($this, $this->_cache);
+                $injector->compile();
+                $this->container = new ContextContainer($injector);
+                $this->configure();
+            }
+            try {
+                $injector = new ScriptInjector($this->_cache);
+            } catch (NotCompiled $e) {
+                $injector = new DiCompiler($this, $this->_cache);
+                $injector->compile();
+            }
         } else {
             $injector = new Injector($this);
         }
         $this->container = new ContextContainer($injector);
         return $this->container;
     }
+
+    private function buildCache() {
+        if( $this->_cache ) {
+            $injector = new DiCompiler($this, $this->_cache);
+            $injector->compile();
+            $this->container = new ContextContainer($injector);
+            $this->configure();
+        }
+    }
+
 
     public function bind(string $interface = ''): \Ray\Di\Bind {
         return parent::bind($interface);
