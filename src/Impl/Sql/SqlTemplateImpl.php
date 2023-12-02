@@ -13,9 +13,9 @@ class SqlTemplateImpl implements SqlTemplate {
     public function __construct(private readonly PDO $pdo) {}
 
     public function execute($query, array $params): bool {
-        $stmt = $this->pdo->prepare($query);
         try {
-            $result = $this->executeParams($stmt, $params);
+            $stmt = $this->prepare($query, $params);
+            $result = $stmt->execute();
             return $result ? $stmt->rowCount() : 0;
         } catch(PDOException $ex) {
             $driver = $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
@@ -28,8 +28,8 @@ class SqlTemplateImpl implements SqlTemplate {
     }
 
     public function query($query, array $params, Closure $clousure): array {
-        $stmt = $this->pdo->prepare($query);
-        $this->executeParams($stmt, $params);
+        $stmt = $this->prepare($query, $params);
+        $stmt->execute();
         $keys = [];
         while ($fila = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $keys[] = $clousure($fila );
@@ -38,30 +38,59 @@ class SqlTemplateImpl implements SqlTemplate {
     }
 
     public function findOne($query, array $params, Closure $clousure) {
-        $stmt = $this->pdo->prepare($query);
-        $this->executeParams($stmt, $params);
+        $stmt = $this->prepare($query, $params);
+        $stmt->execute();
         $key = null;
         $fila = $stmt->fetch(PDO::FETCH_ASSOC);
         return $fila ? $clousure($fila) : null;
     }
 
     public function exists($query, array $params): bool {
-        $stmt = $this->pdo->prepare($query);
-        $this->executeParams($stmt, $params);
+        $stmt = $this->prepare($query, $params);
+        $stmt->execute();
         $key = null;
         return !!$stmt->fetch();
     }
 
-    private function executeParams($stmt, $params) {
+    private function prepare($query, $params) {
+        $theParams = [];
         foreach($params as $key => $param) {
-            if( is_a($param, SqlParam::class)) {
-                $value = $param->value;
-                $stmt->bindValue($param->name, $value, $this->podType( $param->type) );
-            } else {
-                $stmt->bindValue($key, $param);
+            $value = is_a($param, SqlParam::class) ? $param->value : $param;
+            $name = is_a($param, SqlParam::class) ? $param->name : $key;
+            if( is_array($value) ) {
+                $pattern = '/\s+(IN|in)\s*\(\s*:' . preg_quote($name, '/') . '\s*\)/i';
+                $query = preg_replace($pattern, $this->paramExpand($name, $value), $query);
             }
         }
-        return $stmt->execute();
+        $stmt = $this->pdo->prepare($query);
+        foreach($params as $key => $param) {
+            $value = is_a($param, SqlParam::class) ? $param->value : $param;
+            $name = is_a($param, SqlParam::class) ? $param->name : $key;
+            if( is_array($value) ) {
+                for($i=0; $i<count($value); $i++) {
+                    if( is_a($param, SqlParam::class)) {
+                        $stmt->bindValue($name.'_'.($i+1), $value[$i], $this->podType( $param->type) );
+                    } else {
+                        $stmt->bindValue($name.'_'.($i+1), $value[$i]);
+                    }    
+                }
+            } else {
+                if( is_a($param, SqlParam::class)) {
+                    $stmt->bindValue($name, $value, $this->podType( $param->type) );
+                } else {
+                    $stmt->bindValue($name, $value);
+                }
+            }
+        }
+        return $stmt;// ->execute();
+    }
+
+    private function paramExpand($name, $elements) {
+        $params = [];
+        for ($i = 1; $i <= count($elements); $i++) {
+            $params[] = ':'.$name.'_'.$i;
+        }
+        return ' in (' . implode(', ', $params) . ')';
     }
 
     private function podType($type) {
