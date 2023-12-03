@@ -4,6 +4,12 @@ namespace Civi\Micro\Sql;
 use Closure;
 
 interface SqlTemplate {
+    public function begin();
+
+    public function rollback();
+
+    public function commit();
+    
     public function execute($query, array $params): bool ;
 
     public function query($query, array $params, Closure $clousure): array;

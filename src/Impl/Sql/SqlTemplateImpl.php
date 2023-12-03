@@ -12,6 +12,18 @@ class SqlTemplateImpl implements SqlTemplate {
 
     public function __construct(private readonly PDO $pdo) {}
 
+    public function begin() {
+        $this->pdo->beginTransaction();
+    }
+
+    public function rollback() {
+        $this->pdo->rollBack();
+    }
+
+    public function commit() {
+        $this->pdo->commit();
+    }
+
     public function execute($query, array $params): bool {
         try {
             $stmt = $this->prepare($query, $params);
@@ -53,6 +65,10 @@ class SqlTemplateImpl implements SqlTemplate {
     }
 
     private function prepare($query, $params) {
+        $driver = $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+        if( 'mysql' == $driver ) {
+            $query = str_replace('"', "`", $query);
+        }
         $theParams = [];
         foreach($params as $key => $param) {
             $value = is_a($param, SqlParam::class) ? $param->value : $param;
