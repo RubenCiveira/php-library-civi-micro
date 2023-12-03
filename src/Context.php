@@ -52,32 +52,23 @@ class Context extends AbstractModule {
                     die('El directorio cache debe estar vacio para usarlo como cache: '.realpath($this->_cache).' no lo está: vacielo a mano.');
                 }
                 $injector = new DiCompiler($this, $this->_cache);
-                $injector->compile();
-                $this->container = new ContextContainer($injector);
                 $this->configure();
+                $injector->compile();
             }
             try {
                 $injector = new ScriptInjector($this->_cache);
             } catch (NotCompiled $e) {
                 $injector = new DiCompiler($this, $this->_cache);
+                $this->configure();
                 $injector->compile();
             }
         } else {
             $injector = new Injector($this);
+            $this->configure();
         }
         $this->container = new ContextContainer($injector);
         return $this->container;
     }
-
-    private function buildCache() {
-        if( $this->_cache ) {
-            $injector = new DiCompiler($this, $this->_cache);
-            $injector->compile();
-            $this->container = new ContextContainer($injector);
-            $this->configure();
-        }
-    }
-
 
     public function bind(string $interface = ''): \Ray\Di\Bind {
         return parent::bind($interface);
@@ -89,6 +80,7 @@ class Context extends AbstractModule {
 
     #[\Override]
     protected function configure() {
+        echo "<h1>DEFS</h1>";
         foreach(self::$_definitions_list as $path) {
             $path($this);
         }
